@@ -1,9 +1,23 @@
 const inputCity = document.querySelector("#js-city");
 const button = document.querySelector("#js-btn");
-const result = document.querySelector("#js-result");
+
+const result = document.querySelector(".js-result");
 
 const url = "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline";
 const condition = "unitGroup=metric&include=days,hours&elements=datetime,tempmax,tempmin,temp,humidity,conditions";
+
+const htmlFunction = (res) => {
+    if (!res || !res.days || res.days.length === 0) return "";
+    let html = `
+        <span>${res.days[0].conditions}</span>
+        <br>
+        <span>Temperature: ${res.days[0].temp}</span>
+        <br>
+        <span>Humidity: ${res.days[0].humidity}</span>
+    `
+    return html;
+}
+
 
 const currentDate = () => {
     const date = new Date();
@@ -15,25 +29,42 @@ const currentDate = () => {
     return formattedDate;
 }
 
+
 const fetchFunction = async (city) => {
     const date = currentDate();
     try {
         const response = await fetch(`${url}/${city}/${date}?${condition}`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
         return data;
     }
-    catch(error) {
+    catch (error) {
         console.error(`Error, ${error}`);
+        return null;
     };
 }
 
-button.addEventListener("click", (event) => {
-    event.preventDefault();
+
+button.addEventListener("click", () => {
     const city = inputCity.value;
-    if(city === "") return;
+
+    if(city === "") {
+        result.textContent = "Enter a city name before searching."
+        return;
+    }
+    result.textContent = "Loading...";
+
     fetchFunction(city).then((res) => {
-        // Print the result
-    });
+        const html = htmlFunction(res);
+        if (html === "") {
+            result.textContent = "Error loading weather data.";
+            return;
+        }
+        setTimeout(() => {
+            result.innerHTML = html;
+            timeout = true;
+        }, 1000)
+    })
 });
 
 
